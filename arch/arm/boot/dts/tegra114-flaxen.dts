@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/* /dts-v1/; */
+
+/include/ "tegra114-tegratab.dts"
+/ {
+	host1x {
+		/* tegradc.1 */
+		dc@54240000 {
+			dc-default-out {
+				nvidia,out-tmds-cfg {
+					tmds-cfg@0 {
+						pll1 = <0x00300f00>;
+					};
+					tmds-cfg@1 {
+						pll1 = <0x10300f00>;
+					};
+					tmds-cfg@2 {
+						pll1 = <0x10300f00>;
+					};
+					tmds-cfg@3 {
+						pll1 = <0x13300f00>;
+					};
+				};
+			};
+		};
+	};
+};
