@@ -1,7 +1,7 @@
 /*
  * drivers/misc/tegra-profiler/eh_unwind.h
  *
- * Copyright (c) 2014, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -22,6 +22,7 @@ struct quadd_callchain;
 struct quadd_ctx;
 struct quadd_extables;
 struct task_struct;
+struct quadd_extabs_mmap;
 
 unsigned int
 quadd_get_user_callchain_ut(struct pt_regs *regs,
@@ -34,6 +35,8 @@ void quadd_unwind_deinit(void);
 int quadd_unwind_start(struct task_struct *task);
 void quadd_unwind_stop(void);
 
-int quadd_unwind_set_extab(struct quadd_extables *extabs);
+int quadd_unwind_set_extab(struct quadd_extables *extabs,
+			   struct quadd_extabs_mmap *mmap);
+void quadd_unwind_delete_mmap(struct quadd_extabs_mmap *mmap);
 
 #endif	/* __QUADD_EH_UNWIND_H__ */
