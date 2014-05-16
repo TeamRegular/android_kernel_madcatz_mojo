@@ -1,7 +1,7 @@
 /*
  * drivers/misc/tegra-profiler/quadd_proc.c
  *
- * Copyright (c) 2014, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -89,6 +89,8 @@ static int show_capabilities(struct seq_file *f, void *offset)
 		   YES_NO(extra & QUADD_COMM_CAP_EXTRA_SPECIAL_ARCH_MMAP));
 	seq_printf(f, "support mixed unwinding mode:          %s\n",
 		   YES_NO(extra & QUADD_COMM_CAP_EXTRA_UNWIND_MIXED));
+	seq_printf(f, "information about unwind entry:        %s\n",
+		   YES_NO(extra & QUADD_COMM_CAP_EXTRA_UNW_ENTRY_TYPE));
 
 	seq_puts(f, "\n");
 	seq_puts(f, "Supported events:\n");
