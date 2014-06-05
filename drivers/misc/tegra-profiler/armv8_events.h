@@ -1,7 +1,7 @@
 /*
  * drivers/misc/tegra-profiler/armv8_events.h
  *
- * Copyright (c) 2014, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -52,11 +52,11 @@ enum {
 #define QUADD_ARMV8_PMCR_LC		(1 << 6)
 
 /* Number of event counters */
-#define	QUADD_ARMV8_PMCR_N_SHIFT	16
+#define	QUADD_ARMV8_PMCR_N_SHIFT	11
 #define	QUADD_ARMV8_PMCR_N_MASK		0x1f
 
 /* Identification code */
-#define	QUADD_ARMV8_PMCR_IDCODE_SHIFT	11
+#define	QUADD_ARMV8_PMCR_IDCODE_SHIFT	16
 #define	QUADD_ARMV8_PMCR_IDCODE_MASK	0xff
 
 /* Implementer code */
@@ -80,6 +80,9 @@ enum {
 #define QUADD_ARMV8_EVTSEL_MASK		0xff
 
 #define QUADD_ARMV8_COUNTERS_MASK_PMUV3	0x3f
+
+#define QUADD_ARMV8_PMU_NVEXT_SHIFT	4
+#define QUADD_ARMV8_PMU_NVEXT_MASK	0x0f
 
 /*
  * ARMv8 PMUv3 Performance Events handling code.

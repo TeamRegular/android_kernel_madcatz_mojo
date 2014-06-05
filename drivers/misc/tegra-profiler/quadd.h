@@ -1,7 +1,7 @@
 /*
  * drivers/misc/tegra-profiler/quadd.h
  *
- * Copyright (c) 2014, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2015, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -25,6 +25,7 @@ struct event_data;
 struct quadd_comm_data_interface;
 struct quadd_hrt_ctx;
 struct quadd_module_state;
+struct quadd_arch_info;
 
 struct quadd_event_source_interface {
 	int (*enable)(void);
@@ -35,6 +36,7 @@ struct quadd_event_source_interface {
 	int (*set_events)(int *events, int size);
 	int (*get_supported_events)(int *events, int max_events);
 	int (*get_current_events)(int *events, int max_events);
+	struct quadd_arch_info * (*get_arch)(void);
 };
 
 struct source_info {
