@@ -901,11 +901,20 @@ static int usbhid_get_raw_report(struct hid_device *hid,
 		unsigned char report_type)
 {
 	struct usbhid_device *usbhid = hid->driver_data;
-	struct usb_device *dev = hid_to_usb_dev(hid);
-	struct usb_interface *intf = usbhid->intf;
-	struct usb_host_interface *interface = intf->cur_altsetting;
+	struct usb_device *dev;
+	struct usb_interface *intf;
+	struct usb_host_interface *interface;
 	int skipped_report_id = 0;
 	int ret;
+
+	if (test_bit(HID_DISCONNECTED, &usbhid->iofl)) {
+		pr_err("hid device disconnected\n");
+		return -ESHUTDOWN;
+	}
+
+	dev = hid_to_usb_dev(hid);
+	intf = usbhid->intf;
+	interface = intf->cur_altsetting;
 
 	/* Byte 0 is the report number. Report data starts at byte 1.*/
 	buf[0] = report_number;
@@ -1233,6 +1242,18 @@ static int usbhid_power(struct hid_device *hid, int lvl)
 	return r;
 }
 
+static void usbhid_request(struct hid_device *hid, struct hid_report *rep, int reqtype)
+{
+	switch (reqtype) {
+	case HID_REQ_GET_REPORT:
+		usbhid_submit_report(hid, rep, USB_DIR_IN);
+		break;
+	case HID_REQ_SET_REPORT:
+		usbhid_submit_report(hid, rep, USB_DIR_OUT);
+		break;
+	}
+}
+
 static struct hid_ll_driver usb_hid_driver = {
 	.parse = usbhid_parse,
 	.start = usbhid_start,
@@ -1241,6 +1262,7 @@ static struct hid_ll_driver usb_hid_driver = {
 	.close = usbhid_close,
 	.power = usbhid_power,
 	.hidinput_input_event = usb_hidinput_input_event,
+	.request = usbhid_request,
 };
 
 static int usbhid_probe(struct usb_interface *intf, const struct usb_device_id *id)

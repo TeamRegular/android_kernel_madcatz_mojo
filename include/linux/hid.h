@@ -467,6 +467,8 @@ struct hid_driver;
 struct hid_ll_driver;
 
 struct hid_device {							/* device report descriptor */
+	__u8 *dev_rdesc;
+	unsigned dev_rsize;
 	__u8 *rdesc;
 	unsigned rsize;
 	struct hid_collection *collection;				/* List of HID collections */
@@ -686,6 +688,7 @@ struct hid_driver {
  * @hidinput_input_event: event input event (e.g. ff or leds)
  * @parse: this method is called only once to parse the device data,
  *	   shouldn't allocate anything to not leak memory
+ * @request: send report request to device (e.g. feature report)
  */
 struct hid_ll_driver {
 	int (*start)(struct hid_device *hdev);
@@ -700,6 +703,10 @@ struct hid_ll_driver {
 			unsigned int code, int value);
 
 	int (*parse)(struct hid_device *hdev);
+
+	void (*request)(struct hid_device *hdev,
+			struct hid_report *report, int reqtype);
+
 };
 
 #define	PM_HINT_FULLON	1<<5
@@ -735,10 +742,12 @@ int hid_input_report(struct hid_device *, int type, u8 *, int, int);
 int hidinput_find_field(struct hid_device *hid, unsigned int type, unsigned int code, struct hid_field **field);
 struct hid_field *hidinput_get_led_field(struct hid_device *hid);
 unsigned int hidinput_count_leds(struct hid_device *hid);
+__s32 hidinput_calc_abs_res(const struct hid_field *field, __u16 code);
 void hid_output_report(struct hid_report *report, __u8 *data);
 struct hid_device *hid_allocate_device(void);
 struct hid_report *hid_register_report(struct hid_device *device, unsigned type, unsigned id);
 int hid_parse_report(struct hid_device *hid, __u8 *start, unsigned size);
+int hid_open_report(struct hid_device *device);
 int hid_check_keys_pressed(struct hid_device *hid);
 int hid_connect(struct hid_device *hid, unsigned int connect_mask);
 void hid_disconnect(struct hid_device *hid);
@@ -809,16 +818,7 @@ static inline void hid_map_usage_clear(struct hid_input *hidinput,
  */
 static inline int __must_check hid_parse(struct hid_device *hdev)
 {
-	int ret;
-
-	if (hdev->status & HID_STAT_PARSED)
-		return 0;
-
-	ret = hdev->ll_driver->parse(hdev);
-	if (!ret)
-		hdev->status |= HID_STAT_PARSED;
-
-	return ret;
+	return hid_open_report(hdev);
 }
 
 /**
@@ -898,6 +898,20 @@ static inline void hid_hw_close(struct hid_device *hdev)
 static inline int hid_hw_power(struct hid_device *hdev, int level)
 {
 	return hdev->ll_driver->power ? hdev->ll_driver->power(hdev, level) : 0;
+}
+
+/**
+ * hid_hw_request - send report request to device
+ *
+ * @hdev: hid device
+ * @report: report to send
+ * @reqtype: hid request type
+ */
+static inline void hid_hw_request(struct hid_device *hdev,
+				  struct hid_report *report, int reqtype)
+{
+	if (hdev->ll_driver->request)
+		hdev->ll_driver->request(hdev, report, reqtype);
 }
 
 void hid_report_raw_event(struct hid_device *hid, int type, u8 *data, int size,
