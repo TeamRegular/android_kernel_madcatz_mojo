@@ -316,7 +316,7 @@ PALMAS_REGS_PDATA(ldo2, 1200,  1200, palmas_rails(smps7), 0, 1, 1, 0,
 	0, 0, 0, 0, 0);
 PALMAS_REGS_PDATA(ldo3, 1800,  1800, NULL, 0, 0, 1, 0,
 	0, 0, 0, 0, 0);
-PALMAS_REGS_PDATA(ldo4, 3000,  3000, NULL, 0, 0, 1, 0,
+PALMAS_REGS_PDATA(ldo4, 3000,  3300, NULL, 0, 0, 1, 0,
 	0, 0, 0, 0, 0);
 PALMAS_REGS_PDATA(ldo5, 2800,  2800, palmas_rails(smps9), 0, 0, 1, 0,
 	0, 0, 0, 0, 0);
@@ -859,7 +859,10 @@ subsys_initcall_sync(tegratab_fixed_regulator_init);
 
 int __init tegratab_regulator_init(void)
 {
-
+	if (get_tegra_uart_debug_port_id() == UART_FROM_SDCARD) {
+		reg_idata_ldo9.constraints.always_on = 1;
+		reg_idata_ldo9.constraints.boot_on = 1;
+	}
 #ifdef CONFIG_ARCH_TEGRA_HAS_CL_DVFS
 	tegratab_cl_dvfs_init();
 #endif
