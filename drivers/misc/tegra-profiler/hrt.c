@@ -132,8 +132,31 @@ u64 quadd_get_time(void)
 		get_posix_clock_monotonic_time();
 }
 
+static void
+put_sample_cpu(struct quadd_record_data *data,
+	       struct quadd_iovec *vec,
+	       int vec_count, int cpu_id)
+{
+	ssize_t err;
+	struct quadd_comm_data_interface *comm = hrt.quadd_ctx->comm;
+
+	err = comm->put_sample(data, vec, vec_count, cpu_id);
+	if (err < 0)
+		atomic64_inc(&hrt.skipped_samples);
+
+	atomic64_inc(&hrt.counter_samples);
+}
+
+void
+quadd_put_sample(struct quadd_record_data *data,
+		 struct quadd_iovec *vec, int vec_count)
+{
+	put_sample_cpu(data, vec, vec_count, -1);
+}
+
 static void put_header(void)
 {
+	int cpu_id;
 	int nr_events = 0, max_events = QUADD_MAX_COUNTERS;
 	int events[QUADD_MAX_COUNTERS];
 	struct quadd_record_data record;
@@ -188,16 +211,8 @@ static void put_header(void)
 	vec.base = events;
 	vec.len = nr_events * sizeof(events[0]);
 
-	quadd_put_sample(&record, &vec, 1);
-}
-
-void quadd_put_sample(struct quadd_record_data *data,
-		      struct quadd_iovec *vec, int vec_count)
-{
-	struct quadd_comm_data_interface *comm = hrt.quadd_ctx->comm;
-
-	comm->put_sample(data, vec, vec_count);
-	atomic64_inc(&hrt.counter_samples);
+	for_each_possible_cpu(cpu_id)
+		put_sample_cpu(&record, &vec, 1, cpu_id);
 }
 
 static void
@@ -603,6 +618,7 @@ int quadd_hrt_start(void)
 		hrt.ma_period = 0;
 
 	atomic64_set(&hrt.counter_samples, 0);
+	atomic64_set(&hrt.skipped_samples, 0);
 
 	reset_cpu_ctx();
 
@@ -649,8 +665,9 @@ void quadd_hrt_stop(void)
 {
 	struct quadd_ctx *ctx = hrt.quadd_ctx;
 
-	pr_info("Stop hrt, number of samples: %llu\n",
-		atomic64_read(&hrt.counter_samples));
+	pr_info("Stop hrt, samples all/skipped: %llu/%llu\n",
+		atomic64_read(&hrt.counter_samples),
+		atomic64_read(&hrt.skipped_samples));
 
 	if (ctx->pl310)
 		ctx->pl310->stop();
@@ -660,6 +677,7 @@ void quadd_hrt_stop(void)
 	hrt.active = 0;
 
 	atomic64_set(&hrt.counter_samples, 0);
+	atomic64_set(&hrt.skipped_samples, 0);
 
 	/* reset_cpu_ctx(); */
 }
@@ -675,7 +693,7 @@ void quadd_hrt_deinit(void)
 void quadd_hrt_get_state(struct quadd_module_state *state)
 {
 	state->nr_all_samples = atomic64_read(&hrt.counter_samples);
-	state->nr_skipped_samples = 0;
+	state->nr_skipped_samples = atomic64_read(&hrt.skipped_samples);
 }
 
 static void init_arch_timer(void)
