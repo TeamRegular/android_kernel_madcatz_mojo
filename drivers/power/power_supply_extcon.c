@@ -28,6 +28,7 @@
 #include <linux/power/power_supply_extcon.h>
 #include <linux/slab.h>
 #include <linux/extcon.h>
+#include <linux/spinlock.h>
 
 #define CHARGER_TYPE_DETECTION_DEFAULT_DEBOUNCE_TIME_MS		500
 
@@ -39,15 +40,14 @@ struct power_supply_extcon {
 	uint8_t					ac_online;
 	uint8_t					usb_online;
 	struct power_supply_extcon_plat_data	*pdata;
+	spinlock_t				lock;
 };
 
 struct power_supply_cables {
 	const char *name;
-	long int event;
 	struct power_supply_extcon	*psy_extcon;
 	struct notifier_block nb;
 	struct extcon_specific_cable_nb *extcon_dev;
-	struct delayed_work extcon_notifier_work;
 };
 
 static struct power_supply_cables psy_cables[] = {
@@ -107,6 +107,7 @@ static int power_supply_extcon_remove_cable(
 
 	psy_extcon->ac_online = 0;
 	psy_extcon->usb_online = 0;
+
 	power_supply_changed(&psy_extcon->usb);
 	power_supply_changed(&psy_extcon->ac);
 	return 0;
@@ -144,29 +145,21 @@ static int power_supply_extcon_attach_cable(
 	return 0;
 }
 
-static void psy_extcon_extcon_handle_notifier(struct work_struct *w)
-{
-	struct power_supply_cables *cable = container_of(to_delayed_work(w),
-			struct power_supply_cables, extcon_notifier_work);
-	struct power_supply_extcon *psy_extcon = cable->psy_extcon;
-	struct extcon_dev *edev = cable->extcon_dev->edev;
-
-	if (cable->event == 0)
-		power_supply_extcon_remove_cable(psy_extcon, edev);
-	else if (cable->event == 1)
-		power_supply_extcon_attach_cable(psy_extcon, edev);
-}
-
 static int psy_extcon_extcon_notifier(struct notifier_block *self,
 		unsigned long event, void *ptr)
 {
 	struct power_supply_cables *cable = container_of(self,
 		struct power_supply_cables, nb);
+	struct power_supply_extcon *psy_extcon = cable->psy_extcon;
+	struct extcon_dev *edev = cable->extcon_dev->edev;
 
-	cable->event = event;
-	cancel_delayed_work(&cable->extcon_notifier_work);
-	schedule_delayed_work(&cable->extcon_notifier_work,
-	    msecs_to_jiffies(CHARGER_TYPE_DETECTION_DEFAULT_DEBOUNCE_TIME_MS));
+	spin_lock(&psy_extcon->lock);
+	if (event == 0)
+		power_supply_extcon_remove_cable(psy_extcon, edev);
+	else if (event == 1)
+		power_supply_extcon_attach_cable(psy_extcon, edev);
+
+	spin_unlock(&psy_extcon->lock);
 
 	return NOTIFY_DONE;
 }
@@ -191,6 +184,7 @@ static __devinit int psy_extcon_probe(struct platform_device *pdev)
 
 	psy_extcon->dev = &pdev->dev;
 	dev_set_drvdata(&pdev->dev, psy_extcon);
+	spin_lock_init(&psy_extcon->lock);
 
 	psy_extcon->ac.name		= "ac";
 	psy_extcon->ac.type		= POWER_SUPPLY_TYPE_MAINS;
@@ -223,9 +217,6 @@ static __devinit int psy_extcon_probe(struct platform_device *pdev)
 			goto econ_err;
 		}
 
-		INIT_DELAYED_WORK(&cable->extcon_notifier_work,
-					psy_extcon_extcon_handle_notifier);
-
 		cable->psy_extcon = psy_extcon;
 		cable->nb.notifier_call = psy_extcon_extcon_notifier;
 
@@ -241,7 +232,10 @@ static __devinit int psy_extcon_probe(struct platform_device *pdev)
 	if (!psy_extcon->edev)
 			goto econ_err;
 
+	spin_lock(&psy_extcon->lock);
 	power_supply_extcon_attach_cable(psy_extcon, psy_extcon->edev);
+	spin_unlock(&psy_extcon->lock);
+
 	dev_info(&pdev->dev, "%s() get success\n", __func__);
 	return 0;
 
