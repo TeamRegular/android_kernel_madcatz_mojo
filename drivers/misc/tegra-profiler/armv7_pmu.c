@@ -32,6 +32,18 @@
 
 static struct quadd_pmu_ctx pmu_ctx;
 
+#ifndef ARM_CPU_IMP_ARM
+#define ARM_CPU_IMP_ARM			0x41
+#endif
+
+#ifndef ARM_CPU_PART_CORTEX_A9
+#define ARM_CPU_PART_CORTEX_A9		0xC090
+#endif
+
+#ifndef ARM_CPU_PART_CORTEX_A15
+#define ARM_CPU_PART_CORTEX_A15		0xC0F0
+#endif
+
 enum {
 	QUADD_ARM_CPU_TYPE_UNKNOWN,
 	QUADD_ARM_CPU_TYPE_CORTEX_A5,

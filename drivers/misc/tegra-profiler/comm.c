@@ -772,7 +772,7 @@ device_mmap(struct file *filp, struct vm_area_struct *vma)
 	spin_unlock(&comm_ctx.mmaps_lock);
 
 	vma->vm_ops = &mmap_vm_ops;
-	vma->vm_flags |= VM_DONTCOPY | VM_DONTEXPAND | VM_DONTDUMP;
+	vma->vm_flags |= VM_DONTCOPY | VM_DONTEXPAND;
 
 	vma->vm_ops->open(vma);
 

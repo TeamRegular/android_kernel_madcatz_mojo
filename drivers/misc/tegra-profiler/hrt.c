@@ -24,11 +24,9 @@
 #include <linux/interrupt.h>
 #include <linux/err.h>
 #include <linux/nsproxy.h>
-#include <clocksource/arm_arch_timer.h>
 
 #include <asm/cputype.h>
 #include <asm/irq_regs.h>
-#include <asm/arch_timer.h>
 
 #include <linux/tegra_profiler.h>
 
@@ -50,8 +48,6 @@ struct hrt_event_value {
 	int event_id;
 	u32 value;
 };
-
-#define QUADD_ARCH_TIMER_USR_VCT_ACCESS_EN	(1 << 1) /* virtual counter */
 
 /*
  * Read Counter-timer Kernel Control register
@@ -114,22 +110,9 @@ static inline u64 get_posix_clock_monotonic_time(void)
 	return timespec_to_ns(&ts);
 }
 
-static inline u64 get_arch_time(struct timecounter *tc)
-{
-	cycle_t value;
-	const struct cyclecounter *cc = tc->cc;
-
-	value = cc->read(cc);
-	return cyclecounter_cyc2ns(cc, value);
-}
-
 u64 quadd_get_time(void)
 {
-	struct timecounter *tc = hrt.tc;
-
-	return (tc && hrt.use_arch_timer) ?
-		get_arch_time(tc) :
-		get_posix_clock_monotonic_time();
+	return get_posix_clock_monotonic_time();
 }
 
 static void
@@ -195,9 +178,6 @@ static void put_header(void)
 	hdr->extra_length = 0;
 
 	hdr->reserved |= hrt.unw_method << QUADD_HDR_UNW_METHOD_SHIFT;
-
-	if (hrt.use_arch_timer)
-		hdr->reserved |= QUADD_HDR_USE_ARCH_TIMER;
 
 	if (pmu)
 		nr_events += pmu->get_current_events(events, max_events);
@@ -633,12 +613,7 @@ int quadd_hrt_start(void)
 	else
 		hrt.unw_method = QUADD_UNW_METHOD_NONE;
 
-	if (hrt.tc && (extra & QUADD_PARAM_EXTRA_USE_ARCH_TIMER))
-		hrt.use_arch_timer = 1;
-	else
-		hrt.use_arch_timer = 0;
-
-	pr_info("timer: %s\n", hrt.use_arch_timer ? "arch" : "monotonic clock");
+	pr_info("timer: monotonic clock\n");
 
 	put_header();
 
@@ -696,16 +671,6 @@ void quadd_hrt_get_state(struct quadd_module_state *state)
 	state->nr_skipped_samples = atomic64_read(&hrt.skipped_samples);
 }
 
-static void init_arch_timer(void)
-{
-	u32 cntkctl = quadd_arch_timer_get_cntkctl();
-
-	if (cntkctl & QUADD_ARCH_TIMER_USR_VCT_ACCESS_EN)
-		hrt.tc = arch_timer_get_timecounter();
-	else
-		hrt.tc = NULL;
-}
-
 struct quadd_hrt_ctx *quadd_hrt_init(struct quadd_ctx *ctx)
 {
 	int cpu_id;
@@ -727,19 +692,20 @@ struct quadd_hrt_ctx *quadd_hrt_init(struct quadd_ctx *ctx)
 		hrt.ma_period = 0;
 
 	atomic64_set(&hrt.counter_samples, 0);
-	init_arch_timer();
 
 	hrt.cpu_ctx = alloc_percpu(struct quadd_cpu_context);
 	if (!hrt.cpu_ctx)
 		return ERR_PTR(-ENOMEM);
 
-	for (cpu_id = 0; cpu_id < nr_cpu_ids; cpu_id++) {
+	for_each_possible_cpu(cpu_id) {
 		cpu_ctx = per_cpu_ptr(hrt.cpu_ctx, cpu_id);
 
 		atomic_set(&cpu_ctx->nr_active, 0);
 
 		cpu_ctx->active_thread.pid = -1;
 		cpu_ctx->active_thread.tgid = -1;
+
+		cpu_ctx->cc.hrt = &hrt;
 
 		init_hrtimer(cpu_ctx);
 	}
