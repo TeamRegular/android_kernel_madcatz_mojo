@@ -964,11 +964,15 @@ static void __init tegra_tegratab_dt_init(void)
 	tegra_tegratab_early_init();
 
 #ifdef CONFIG_USE_OF
+	/* when bits_per_pixel is 32, frame buffer need minimum
+	 line_length(over 800 due to TEGRA_LINEAR_PITCH_ALIGNMENT)
+	 * 4 * height(1280) * double buffer(2)
+	 = over 8MB */
 #if defined(CONFIG_NVMAP_CONVERT_CARVEOUT_TO_IOVMM)
-	tegratab_dc0_platform_data.of_data.fb_size = SZ_8M;
+	tegratab_dc0_platform_data.of_data.fb_size = SZ_8M + SZ_1M;
 	tegratab_dc1_platform_data.of_data.fb_size = SZ_16M;
 #else
-	tegratab_dc0_platform_data.of_data.fb_size = SZ_8M;
+	tegratab_dc0_platform_data.of_data.fb_size = SZ_8M + SZ_1M;
 	tegratab_dc1_platform_data.of_data.fb_size = SZ_4M;
 #endif
 	tegratab_dc0_platform_data.of_data.fb_start = tegra_fb_start;
