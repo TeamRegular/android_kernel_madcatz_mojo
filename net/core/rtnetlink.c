@@ -2130,6 +2130,9 @@ void __init rtnetlink_init(void)
 {
 	int i;
 
+	/* make sure rtnl_msg_handlers is clean */
+	memset(rtnl_msg_handlers, 0, sizeof(rtnl_msg_handlers));
+
 	rtattr_max = 0;
 	for (i = 0; i < ARRAY_SIZE(rta_max); i++)
 		if (rta_max[i] > rtattr_max)
