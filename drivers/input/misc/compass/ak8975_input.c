@@ -1,5 +1,5 @@
 /* Copyright (C) 2012 Invensense, Inc.
- * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2013-2014, NVIDIA CORPORATION.  All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -1549,7 +1549,7 @@ static void __exit akm_exit(void)
 	i2c_del_driver(&akm_driver);
 }
 
-module_init(akm_init);
+late_initcall(akm_init);
 module_exit(akm_exit);
 
 MODULE_LICENSE("GPL");
