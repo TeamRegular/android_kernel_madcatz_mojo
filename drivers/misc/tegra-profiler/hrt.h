@@ -62,6 +62,7 @@ struct quadd_hrt_ctx {
 	unsigned long rss_size_prev;
 
 	unsigned int unw_method;
+	int get_stack_offset;
 };
 
 #define QUADD_HRT_MIN_FREQ	100
