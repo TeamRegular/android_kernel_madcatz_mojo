@@ -3122,6 +3122,10 @@ ov5693_mode_wr_err:
 static int ov5693_get_fuse_id(struct ov5693_info *info)
 {
 	int i;
+
+	if (info->fuseid.size > 0)
+		return 0;
+
 	regmap_write(info->regmap, 0x3D84, 0xC0);
 	regmap_write(info->regmap, 0x3D81, 0x40);
 	for (i = 0; i < OV5693_FUSE_ID_SIZE; i++) {
