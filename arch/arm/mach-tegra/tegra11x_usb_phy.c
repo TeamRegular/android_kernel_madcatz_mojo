@@ -1175,7 +1175,7 @@ static void utmi_phy_restore_end(struct tegra_usb_phy *phy)
 		} while (val & (USB_PORTSC_RESUME | USB_PORTSC_SUSP));
 
 		/* Add delay sothat resume will be driven for more than 20 ms */
-		mdelay(10);
+		usleep_range(10000, 11000);
 		local_irq_save(flags);
 		pmc->pmc_ops->disable_pmc_bus_ctrl(pmc, 1);
 		phy->pmc_remote_wakeup = false;
@@ -1628,10 +1628,10 @@ static void uhsic_phy_restore_end(struct tegra_usb_phy *phy)
 
 	if (irq_disabled) {
 		local_irq_restore(flags);
-		mdelay(25);
+		usleep_range(25000, 26000);
 		local_irq_save(flags);
 	} else
-		mdelay(10);
+		usleep_range(10000, 11000);
 
 	val = tegra_usb_pmc_reg_read(PMC_UHSIC_SLEEP_CFG(phy->inst));
 	if (val & UHSIC_MASTER_ENABLE(phy->inst)) {
