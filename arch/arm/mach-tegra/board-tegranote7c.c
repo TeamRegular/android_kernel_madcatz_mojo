@@ -884,10 +884,21 @@ static void __init tegra_tegranote7c_dt_init(void)
 
 #ifdef CONFIG_USE_OF
 #if defined(CONFIG_NVMAP_CONVERT_CARVEOUT_TO_IOVMM)
-	tegranote7c_dc0_platform_data.of_data.fb_size = SZ_16M + SZ_2M;
-	tegranote7c_dc1_platform_data.of_data.fb_size = SZ_16M;
+	if (get_androidboot_mode_charger() ||
+		get_androidkernel_type_recovery())
+		tegranote7c_dc0_platform_data.of_data.fb_size =
+			SZ_8M + SZ_1M;
+	else
+		tegranote7c_dc0_platform_data.of_data.fb_size =
+			SZ_4M + SZ_512K;
+	/*
+	 * TODO: Need to find the reason
+	 * why small fb2 size matters in minui
+	 * like charger, recovery screen
+	 */
+	tegranote7c_dc1_platform_data.of_data.fb_size = SZ_2M;
 #else
-	tegranote7c_dc0_platform_data.of_data.fb_size = SZ_16M + SZ_2M;
+	tegranote7c_dc0_platform_data.of_data.fb_size = SZ_8M + SZ_1M;
 	tegranote7c_dc1_platform_data.of_data.fb_size = SZ_4M;
 #endif
 	tegranote7c_dc0_platform_data.of_data.fb_start = tegra_fb_start;
@@ -912,7 +923,16 @@ static void __init tegra_tegranote7c_reserve(void)
 {
 #if defined(CONFIG_NVMAP_CONVERT_CARVEOUT_TO_IOVMM)
 	/* 800*1280*4*2 =  8192000 bytes */
-	tegra_reserve(0, SZ_8M, SZ_16M);
+	/*
+	 * TODO: Need to find the reason
+	 * why small fb2 size matters in minui
+	 * like charger, recovery screen
+	 */
+	if (get_androidboot_mode_charger() ||
+		get_androidkernel_type_recovery())
+		tegra_reserve(0, SZ_8M + SZ_1M, SZ_2M);
+	else
+		tegra_reserve(0, SZ_4M + SZ_512K, SZ_2M);
 #else
 	tegra_reserve(SZ_128M, SZ_8M, SZ_4M);
 #endif

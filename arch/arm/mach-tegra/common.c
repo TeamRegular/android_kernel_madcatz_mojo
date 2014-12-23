@@ -1379,6 +1379,7 @@ __setup("pmic_rst_reason=", tegra_pmic_rst_reason);
 
 #ifdef CONFIG_ANDROID
 static bool androidboot_mode_charger;
+static bool androidkernel_type_recovery;
 
 bool get_androidboot_mode_charger(void)
 {
@@ -1393,6 +1394,20 @@ static int __init tegra_androidboot_mode(char *options)
 	return 1;
 }
 __setup("androidboot.mode=", tegra_androidboot_mode);
+
+bool get_androidkernel_type_recovery(void)
+{
+	return androidkernel_type_recovery;
+}
+static int __init tegra_androidkernel_type(char *options)
+{
+	if (!strcmp(options, "recovery"))
+		androidkernel_type_recovery = true;
+	else
+		androidkernel_type_recovery = false;
+	return 1;
+}
+__setup("android.kerneltype=", tegra_androidkernel_type);
 #endif
 
 /*
