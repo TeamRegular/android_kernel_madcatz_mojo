@@ -59,6 +59,8 @@ const char *palmas_excon_cable[] = {
 	NULL,
 };
 
+static int id_connected = 0;
+
 static int palmas_extcon_vbus_cable_update(
 		struct palmas_extcon *palma_econ)
 {
@@ -105,10 +107,13 @@ static void palmas_extcon_usb_id_detect_work(struct work_struct *w)
 				"INT3_LINE_STATE read failed: %d\n", ret);
 	}
 
-	if (status & PALMAS_INT3_LINE_STATE_ID)
+	if (status & PALMAS_INT3_LINE_STATE_ID) {
 		extcon_set_cable_state(palma_econ->edev, "USB-Host", true);
-	else
+		id_connected = 1;
+	} else{
 		extcon_set_cable_state(palma_econ->edev, "USB-Host", false);
+		id_connected = 0;
+	}
 
 	dev_info(palma_econ->dev, "ID USB-Host state: %s\n",
 		(status & PALMAS_INT3_LINE_STATE_ID) ? "true" : "false");
@@ -130,10 +135,13 @@ static int palmas_extcon_id_cable_update(
 	}
 
 #ifndef USB_ID_DETECTION_DEBOUNCE_TIME_MS
-	if (status & PALMAS_INT3_LINE_STATE_ID)
+	if (status & PALMAS_INT3_LINE_STATE_ID) {
 		extcon_set_cable_state(palma_econ->edev, "USB-Host", true);
-	else
+		id_connected = 1;
+	} else {
 		extcon_set_cable_state(palma_econ->edev, "USB-Host", false);
+		id_connected = 0;
+	}
 #endif
 
 	dev_info(palma_econ->dev, "ID %s status: 0x%02x\n",
@@ -315,6 +323,9 @@ static int palmas_extcon_suspend(struct device *dev)
 {
 	struct palmas_extcon *palma_econ = dev_get_drvdata(dev);
 
+	if (id_connected == 1)
+		disable_irq(palma_econ->vbus_irq);
+
 	if (device_may_wakeup(dev)) {
 		if (palma_econ->enable_vbus_detection)
 			enable_irq_wake(palma_econ->vbus_irq);
@@ -327,6 +338,9 @@ static int palmas_extcon_suspend(struct device *dev)
 static int palmas_extcon_resume(struct device *dev)
 {
 	struct palmas_extcon *palma_econ = dev_get_drvdata(dev);
+
+	if (id_connected == 1)
+		enable_irq(palma_econ->vbus_irq);
 
 	if (device_may_wakeup(dev)) {
 		if (palma_econ->enable_vbus_detection)
