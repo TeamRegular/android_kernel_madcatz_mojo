@@ -812,22 +812,7 @@ static int tegra_bt_startup(struct snd_pcm_substream *substream)
 		i2s->dam_ch_refcount++;
 		tegra30_dam_enable_clock(i2s->dam_ifc);
 
-		if (machine->is_call_mode) {
-			tegra30_ahub_set_rx_cif_source(
-				TEGRA30_AHUB_RXCIF_DAM0_RX1 +
-				(i2s->dam_ifc*2), i2s->txcif);
-			/*
-			* make the dam tx to i2s rx connection
-			* if this is the only client
-			* using i2s for playback
-			*/
-			if (i2s->playback_ref_count == 1)
-				tegra30_ahub_set_rx_cif_source(
-					TEGRA30_AHUB_RXCIF_I2S0_RX0 +
-					i2s->id,
-					TEGRA30_AHUB_TXCIF_DAM0_TX0 +
-					i2s->dam_ifc);
-		} else {
+		{
 			tegra30_ahub_set_rx_cif_source(
 				TEGRA30_AHUB_RXCIF_I2S0_RX0 + i2s->id,
 				i2s->txcif);
