@@ -58,6 +58,7 @@ static struct gpio_keys_button tegratab_e1569_keys[] = {
 	[0] = GPIO_KEY(KEY_POWER, PQ0, 1),
 	[1] = GPIO_KEY(KEY_VOLUMEUP, PR2, 0),
 	[2] = GPIO_KEY(KEY_VOLUMEDOWN, PR1, 0),
+	[3] = GPIO_SW(SW_TABLET_MODE, PO2, 1, 0),
 };
 
 static struct gpio_keys_button tegratab_p1640_keys[] = {
