@@ -26,4 +26,8 @@
  */
 #define NET_IP_ALIGN	0
 
+#if defined(CONFIG_KEXEC_HARDBOOT)
+#define KEXEC_HB_PAGE_ADDR		UL(0xF7400000)
+#endif
+
 #endif

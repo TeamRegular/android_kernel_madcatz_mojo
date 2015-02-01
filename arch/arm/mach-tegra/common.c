@@ -1692,11 +1692,23 @@ static struct persistent_ram ram = {
 
 void __init tegra_ram_console_debug_reserve(unsigned long ram_console_size)
 {
+#ifdef CONFIG_KEXEC_HARDBOOT
+	phys_addr_t start;
+#endif
 	int ret;
 
 	ram.start = memblock_end_of_DRAM() - ram_console_size;
 	ram.size = ram_console_size;
 	ram.descs->size = ram_console_size;
+
+#ifdef CONFIG_KEXEC_HARDBOOT
+	// Reserve space for hardboot page, just before the ram_console
+	start = ram.start- SZ_1M;
+	if(!memblock_remove(start, SZ_1M))
+		pr_info("Hardboot page reserved at 0x%X\n", start);
+	else
+		pr_err("Failed to reserve space for hardboot page at 0x%X!\n", start);
+#endif
 
 	INIT_LIST_HEAD(&ram.node);
 
