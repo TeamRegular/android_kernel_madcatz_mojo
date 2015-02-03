@@ -146,8 +146,9 @@ void tegra_init_speedo_data(void)
 
 	pr_info("Tegra11: CPU Speedo ID %d, Soc Speedo ID %d",
 		cpu_speedo_id, soc_speedo_id);
-	pr_info("Tegra11: CPU Speedo Value %d, Soc Speedo Value %d",
+	pr_info("         CPU Speedo Value %d, Soc Speedo Value %d",
 		cpu_speedo_value, core_speedo_value);
+	pr_info("         CPU IDDQ Value %d", cpu_iddq_value);
 
 	for (i = 0; i < CPU_PROCESS_CORNERS_NUM; i++) {
 		if (cpu_speedo_value <
