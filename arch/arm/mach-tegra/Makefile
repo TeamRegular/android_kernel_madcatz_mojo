@@ -309,6 +309,17 @@ obj-${CONFIG_MACH_MACALLAN}             += board-macallan-kbc.o
 obj-${CONFIG_MACH_MACALLAN}             += board-macallan-sensors.o
 obj-${CONFIG_MACH_MACALLAN}             += panel-p-wuxga-10-1.o
 
+obj-${CONFIG_MACH_MOJO}             += board-mojo.o
+obj-${CONFIG_MACH_MOJO}             += board-mojo-memory.o
+obj-${CONFIG_MACH_MOJO}             += board-mojo-pinmux.o
+obj-${CONFIG_MACH_MOJO}             += board-mojo-power.o
+obj-${CONFIG_MACH_MOJO}             += board-mojo-powermon.o
+obj-${CONFIG_MACH_MOJO}             += board-mojo-sdhci.o
+obj-${CONFIG_MACH_MOJO}             += board-mojo-panel.o
+obj-${CONFIG_MACH_MOJO}             += board-mojo-kbc.o
+obj-${CONFIG_MACH_MOJO}             += board-mojo-sensors.o
+obj-${CONFIG_MACH_MOJO}             += panel-p-wuxga-10-1.o
+
 obj-${CONFIG_MACH_TEGRATAB}            += board-tegratab.o
 obj-${CONFIG_MACH_TEGRATAB}            += board-tegratab-memory.o
 obj-${CONFIG_MACH_TEGRATAB}            += board-tegratab-pinmux.o

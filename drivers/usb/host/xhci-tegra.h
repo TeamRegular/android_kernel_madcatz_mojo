@@ -53,18 +53,6 @@
 #define IOPHY_USB3_RXWANDER (0xF << 4)
 #define IOPHY_USB3_RXEQ (0xFFFF << 8)
 #define IOPHY_USB3_CDRCNTL (0xFF << 24)
-#define SNPS_OC_MAP_CTRL1 (0x7 << 0)
-#define SNPS_OC_MAP_CTRL2 (0x7 << 3)
-#define SNPS_OC_MAP_CTRL3 (0x7 << 6)
-#define SNPS_CTRL1_OC_DETECTED_VBUS_PAD0 (0x4 << 0)
-#define OC_DET_VBUS_ENABLE0_OC_MAP (0x7 << 10)
-#define OC_DET_VBUS_ENABLE1_OC_MAP (0x7 << 13)
-#define OC_DET_VBUS_EN0_OC_DETECTED_VBUS_PAD0 (0x4 << 10)
-#define OC_DET_VBUS_EN1_OC_DETECTED_VBUS_PAD1 (0x5 << 13)
-#define USB2_OC_MAP_PORT0 (0x7 << 0)
-#define USB2_OC_MAP_PORT1 (0x7 << 3)
-#define USB2_OC_MAP_PORT0_OC_DETECTED_VBUS_PAD0 (0x4 << 0)
-#define USB2_OC_MAP_PORT1_OC_DETECTED_VBUS_PAD1 (0x5 << 3)
 
 #define XUSB_CSB_MP_L2IMEMOP_TRIG				0x00101A14
 #define XUSB_CSB_MP_APMAP					0x0010181C
@@ -253,43 +241,26 @@
 #define ULPI_PHY					1
 #define ULPI_PORT_INTERNAL			(1 << 25)
 
-#define SNPS_OC_MAP_0				0xc
-#define CONTROLLER1_OC_PIN(x)		(((x) & 0x7) << 0)
-#define CONTROLLER2_OC_PIN(x)		(((x) & 0x7) << 3)
-#define CONTROLLER3_OC_PIN(x)		(((x) & 0x7) << 6)
-
 #define USB2_OC_MAP_0				0x10
-#define PORT0_OC_PIN(x)				(((x) & 0x7) << 0)
-#define PORT1_OC_PIN(x)				(((x) & 0x7) << 3)
+#define USB2_PORT_OC_PIN(x, v)         (((v) & 0x7) << (x * 3))
 
 #define SS_PORT_MAP_0				0x14
 #define PORT0_MAP(x)				(((x) & 0x7) << 0)
 #define PORT1_MAP(x)				(((x) & 0x7) << 4)
 
 #define OC_DET_0							0x18
-#define SET_OC_DETECTED0					(1 << 0)
-#define SET_OC_DETECTED1					(1 << 1)
-#define SET_OC_DETECTED2					(1 << 2)
-#define SET_OC_DETECTED3					(1 << 3)
-#define VBUS_ENABLE0						(1 << 8)
-#define VBUS_ENABLE1						(1 << 9)
-#define VBUS_ENABLE0_OC_MAP(x)				(((x) & 0x7) << 10)
-#define VBUS_ENABLE1_OC_MAP(x)				(((x) & 0x7) << 13)
-#define  OC_VBUS_PAD0						(4)
-#define  OC_VBUS_PAD1						(5)
+#define SET_OC_DETECTED(x)         (1 << x)
+#define VBUS_ENABLE(x)             (1 << (8 + x))
+#define VBUS_ENABLE_OC_MAP(x, v)       (((v) & 0x7) << (10 + 3 * x))
+#define  OC_DETECT_0               (0)
+#define  OC_VBUS_PAD(x)            (x + 4)
 #define  OC_DISABLE						(7)
-#define OC_DETECTED0						(1 << 16)
-#define OC_DETECTED1						(1 << 17)
-#define OC_DETECTED2						(1 << 18)
-#define OC_DETECTED3						(1 << 19)
-#define OC_DETECTED_VBUS_PAD0				(1 << 20)
-#define OC_DETECTED_VBUS_PAD1				(1 << 21)
-#define OC_DETECTED_INTERRUPT_ENABLE0		(1 << 24)
-#define OC_DETECTED_INTERRUPT_ENABLE1		(1 << 25)
-#define OC_DETECTED_INTERRUPT_ENABLE2		(1 << 26)
-#define OC_DETECTED_INTERRUPT_ENABLE3		(1 << 27)
-#define OC_DETECTED_INTERRUPT_ENABLE_VBUSPAD0	(1 << 28)
-#define OC_DETECTED_INTERRUPT_ENABLE_VBUSPAD1	(1 << 29)
+#define OC_DETECTED(x)             (1 << (16 + x))
+#define OC_DETECTED_VBUS_PAD(x)        (1 << (20 + x))
+#define OC_DETECTED_VBUS_PAD_MASK      (0x3 << 20)
+#define OC_DETECTED_INTR_ENABLE(x)     (1 << (24 + x))
+#define OC_DETECTED_INTR_ENABLE_VBUS_PAD(x)    (1 << (28 + x))
+
 #define ELPG_PROGRAM_0						0x1c
 #define USB2_PORT0_WAKE_INTERRUPT_ENABLE	(1 << 0)
 #define USB2_PORT1_WAKE_INTERRUPT_ENABLE	(1 << 1)
@@ -687,12 +658,6 @@ struct hsic_pad0_ctl_1_vals {
 	u32 tx_slewp;
 	u32 tx_slewn;
 	u32 hsic_opt;
-};
-
-struct snps_oc_map_0 {
-	u32 controller1_oc;
-	u32 controller2_oc;
-	u32 controller3_oc;
 };
 
 struct usb2_oc_map_0 {

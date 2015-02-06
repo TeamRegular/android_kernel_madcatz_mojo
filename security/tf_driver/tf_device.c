@@ -746,7 +746,7 @@ static long tf_device_ioctl(struct file *file, unsigned int ioctl_num,
 			break;
 
 		case TF_MESSAGE_TYPE_INVOKE_CLIENT_COMMAND:
-			tegra_hdmi_enable_clk();
+                        tegra_hdmi_enable_clk();
 			trace_invoke_client_command(NVSEC_INVOKE_CMD_START);
 			result = tf_invoke_client_command(connection,
 				&command, &answer);

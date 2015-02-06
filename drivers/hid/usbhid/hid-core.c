@@ -36,6 +36,7 @@
 #include <linux/hid-debug.h>
 #include <linux/hidraw.h>
 #include "usbhid.h"
+#include "../hid-ids.h"
 
 /*
  * Version Information
@@ -246,20 +247,66 @@ static int usbhid_restart_ctrl_queue(struct usbhid_device *usbhid)
 	return kicked;
 }
 
+int hid_input_check_madcatz(struct hid_device *hid)
+{
+	if((hid->vendor == USB_VENDOR_ID_MADCATZ)/*&& (hid->product == 0xA263)*/)
+		return true;
+	else
+		return false;
+}
+static u8  check_zero_range(u8 *indata, int start, int end)
+{
+	u8 i;
+	u8 ret=false;
+	if(indata != NULL){
+		for (i = start; i < end; i++) {
+			if(indata[i] == 0x00)
+				ret |= 0x1;
+			else
+			{
+				ret = 0;
+				break;
+			}
+		}
+		return ret;
+	}
+}
+
 /*
  * Input interrupt completion handler.
  */
-
 static void hid_irq_in(struct urb *urb)
 {
 	struct hid_device	*hid = urb->context;
 	struct usbhid_device 	*usbhid = hid->driver_data;
 	int			status;
+	u8 tmp[16]={0}; 
 
 	switch (urb->status) {
 	case 0:			/* success */
 		usbhid_mark_busy(usbhid);
 		usbhid->retry_delay = 0;
+		
+	       if((hid_input_check_madcatz(urb->context)) &&
+		   	( (urb->actual_length == 16) && check_zero_range(urb->transfer_buffer, 1, urb->actual_length) && usbhid ->from_resume)){
+
+			memset(tmp,0,sizeof(tmp));
+			//set "B" Key for Madcatz CTRLR
+			tmp[0] = 1;
+			tmp[1] = 0x2;
+			tmp[5] = tmp[7] = tmp[9] = tmp[11] = 0x80;
+			hid_input_report(urb->context, HID_INPUT_REPORT, tmp, 16, 1);
+
+			tmp[1] = 0x0;
+			set_bit(HID_KEYS_PRESSED, &usbhid->iofl);
+			usbhid_mark_busy(usbhid);
+			usbhid->retry_delay = 0;
+			hid_input_report(urb->context, HID_INPUT_REPORT, tmp, 16, 1);
+			clear_bit(HID_KEYS_PRESSED, &usbhid->iofl);
+			usbhid ->from_resume = 0;
+			break;
+	       }
+		else
 		hid_input_report(urb->context, HID_INPUT_REPORT,
 				 urb->transfer_buffer,
 				 urb->actual_length, 1);
@@ -1170,9 +1217,8 @@ static int usbhid_start(struct hid_device *hid)
 	 * In addition, enable remote wakeup by default for all keyboard
 	 * devices supporting the boot protocol.
 	 */
-	if (interface->desc.bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT &&
-			interface->desc.bInterfaceProtocol ==
-				USB_INTERFACE_PROTOCOL_KEYBOARD) {
+	// set all bootable usb devices to wakeup system
+	if (interface->desc.bInterfaceSubClass == USB_INTERFACE_SUBCLASS_BOOT) {
 		usbhid_set_leds(hid);
 		device_set_wakeup_enable(&dev->dev, 1);
 	}
@@ -1498,6 +1544,7 @@ static int hid_resume(struct usb_interface *intf)
 	    test_bit(HID_RESET_PENDING, &usbhid->iofl))
 		schedule_work(&usbhid->reset_work);
 	usbhid->retry_delay = 0;
+	usbhid->from_resume = 1;
 	status = hid_start_in(hid);
 	if (status < 0)
 		hid_io_error(hid);

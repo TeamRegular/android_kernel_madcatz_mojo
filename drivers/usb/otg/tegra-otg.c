@@ -536,6 +536,49 @@ static ssize_t store_host_en(struct device *dev, struct device_attribute *attr,
 
 static DEVICE_ATTR(enable_host, 0644, show_host_en, store_host_en);
 
+
+static ssize_t show_peripheral_en(struct device *dev, struct device_attribute *attr,
+				char *buf)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct tegra_otg_data *tegra = platform_get_drvdata(pdev);
+
+	*buf = tegra->interrupt_mode ? '0': '1';
+	strcat(buf, "\n");
+
+	pr_info("show_peripheral_en\n");
+
+	return strlen(buf);
+}
+
+static ssize_t store_peripheral_en(struct device *dev, struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct tegra_otg_data *tegra = platform_get_drvdata(pdev);
+	int peri;
+
+	if (sscanf(buf, "%d", &peri) != 1 || peri < 0 || peri > 1)
+		return -EINVAL;
+
+	pr_info("store_peripheral_en=%d\n", peri);
+
+	if (peri) {
+		enable_interrupt(tegra, false);  // disable usb mode switch by detecting interrupt status
+		tegra_change_otg_state(tegra, OTG_STATE_A_SUSPEND);
+		tegra_change_otg_state(tegra, OTG_STATE_B_PERIPHERAL);
+		tegra->interrupt_mode = false;
+	} else {
+		tegra->interrupt_mode = true;
+		tegra_change_otg_state(tegra, OTG_STATE_A_SUSPEND);
+		enable_interrupt(tegra, true);
+	}
+
+	return count;
+}
+
+static DEVICE_ATTR(enable_peripheral, 0644, show_peripheral_en, store_peripheral_en);
+
 static int tegra_otg_set_power(struct usb_phy *phy, unsigned mA)
 {
 	return 0;
@@ -696,6 +739,12 @@ static int tegra_otg_probe(struct platform_device *pdev)
 			dev_warn(&pdev->dev, "Can't register sysfs attribute\n");
 			goto err_irq;
 		}
+	}
+
+	err = device_create_file(&pdev->dev, &dev_attr_enable_peripheral);
+	if (err) {
+		dev_warn(&pdev->dev, "Can't register sysfs attribute\n");
+		goto err_irq;
 	}
 
 	if (tegra->support_pmu_vbus) {

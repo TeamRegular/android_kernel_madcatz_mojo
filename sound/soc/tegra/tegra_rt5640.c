@@ -1171,7 +1171,7 @@ static struct snd_soc_jack_gpio tegra_rt5640_hp_jack_gpio = {
 	.name = "headphone detect",
 	.report = SND_JACK_HEADPHONE,
 	.debounce_time = 150,
-	.invert = 1,
+	.invert = 0,
 };
 
 #ifdef CONFIG_SWITCH

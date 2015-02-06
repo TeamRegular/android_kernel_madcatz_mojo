@@ -144,6 +144,14 @@ err:
 	return ret;
 }
 
+static void shutdown_lemon_led(struct gpio_led_data *led)
+{
+
+	if (!gpio_is_valid(led->gpio))
+		return;
+	gpio_set_value_cansleep(led->gpio, 1);
+}
+ 
 static void delete_gpio_led(struct gpio_led_data *led)
 {
 	if (!gpio_is_valid(led->gpio))
@@ -282,9 +290,21 @@ static int __devexit gpio_led_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static int gpio_led_shutdown(struct platform_device *pdev)
+{
+	struct gpio_leds_priv *priv = dev_get_drvdata(&pdev->dev);
+	int i;
+
+	for (i = 0; i < priv->num_leds; i++)
+		shutdown_lemon_led(&priv->leds[i]);
+
+	return 0;
+}
+
 static struct platform_driver gpio_led_driver = {
 	.probe		= gpio_led_probe,
 	.remove		= __devexit_p(gpio_led_remove),
+	.shutdown	= gpio_led_shutdown,
 	.driver		= {
 		.name	= "leds-gpio",
 		.owner	= THIS_MODULE,

@@ -253,6 +253,16 @@ struct palmas_extcon_platform_data {
 	bool enable_id_pin_detection;
 };
 
+struct palmas_gpio_platform_data {
+	int		gpio_base;
+	unsigned	irq_base;
+	unsigned irq_end;
+	/* package the LED signals as output-only GPIOs? */
+	bool		use_leds;
+	int		(*setup)(struct device *dev,
+				unsigned gpio, unsigned ngpio);
+};
+
 struct palmas_platform_data {
 	int gpio_base;
 	int irq_base;
@@ -273,6 +283,7 @@ struct palmas_platform_data {
 
 	struct palmas_pinctrl_platform_data *pinctrl_pdata;
 	struct palmas_extcon_platform_data *extcon_pdata;
+	struct palmas_gpio_platform_data	*gpio;
 
 	int watchdog_timer_initial_period;
 

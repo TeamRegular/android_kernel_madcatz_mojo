@@ -49,7 +49,7 @@ struct tegra_xusb_platform_data *tegra_xusb_init(
 			struct tegra_xusb_board_data *bdata)
 {
 #ifdef CONFIG_ARCH_TEGRA_11x_SOC
-	tegra_xusb_plat_data.quirks |= TEGRA_XUSB_NEED_HS_DISCONNECT_SW_WAR;
+	tegra_xusb_plat_data.quirks |= TEGRA_XUSB_USE_HS_SRC_CLOCK2;
 	tegra_xusb_plat_data.rx_wander = (0x3 << 4);
 	tegra_xusb_plat_data.rx_eq = (0x3928 << 8);
 	tegra_xusb_plat_data.cdr_cntl = (0x26 << 24);

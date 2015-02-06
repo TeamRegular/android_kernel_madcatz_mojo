@@ -257,10 +257,10 @@ const struct tmds_config tmds_config[] = {
 		PE_CURRENT1(PE_CURRENT_5_0_mA) |
 		PE_CURRENT2(PE_CURRENT_5_0_mA) |
 		PE_CURRENT3(PE_CURRENT_5_0_mA),
-	.drive_current = DRIVE_CURRENT_LANE0(DRIVE_CURRENT_13_500_mA) |
-		DRIVE_CURRENT_LANE1(DRIVE_CURRENT_13_500_mA) |
-		DRIVE_CURRENT_LANE2(DRIVE_CURRENT_13_500_mA) |
-		DRIVE_CURRENT_LANE3(DRIVE_CURRENT_13_500_mA),
+	.drive_current = DRIVE_CURRENT_LANE0(DRIVE_CURRENT_10_875_mA) |
+		DRIVE_CURRENT_LANE1(DRIVE_CURRENT_10_875_mA) |
+		DRIVE_CURRENT_LANE2(DRIVE_CURRENT_10_875_mA) |
+		DRIVE_CURRENT_LANE3(DRIVE_CURRENT_10_875_mA),
 	.peak_current = 0x00000000,
 	},
 	{ /* 225MHz modes */
@@ -478,7 +478,7 @@ static inline void tegra_hdmi_hotplug_signal(struct tegra_dc_hdmi_data *hdmi)
 {
 	tegra_dc_hpd(hdmi->dc);
 	queue_delayed_work(system_nrt_wq, &hdmi->work,
-		msecs_to_jiffies(30));
+		msecs_to_jiffies(1000));
 }
 
 /* disables hotplug IRQ - this must be balanced */
@@ -972,17 +972,25 @@ static bool tegra_dc_hdmi_detect(struct tegra_dc *dc)
 	mutex_lock(&dc->lock);
 #endif /* CONFIG_ANDROID */
 
-	if (!tegra_dc_hdmi_hpd(dc))
+	if (!tegra_dc_hdmi_hpd(dc)) {
+		//printk("tegra_dc_hdmi_hpd() failed\n");
 		goto fail;
+	}
 
-	if (dc->connected)
+	if (dc->connected) {
+		//printk("dc->connected=true\n");
 		goto success;
+	}
 
+    //printk("tegra_edid_get_monspecs()\n");
 	err = tegra_edid_get_monspecs(hdmi->edid, &specs);
 	if (err < 0) {
-		if (dc->out->n_modes)
-			tegra_dc_enable(dc);
-		else {
+		if (dc->out->n_modes) {
+            //printk("I am here, and goto fail\n");
+            goto fail;
+			//tegra_dc_enable(dc);
+		} else {
+			//printk("error reading edid\n");
 			dev_err(&dc->ndev->dev, "error reading edid\n");
 			goto fail;
 		}
@@ -993,10 +1001,10 @@ static bool tegra_dc_hdmi_detect(struct tegra_dc *dc)
 		switch_set_state(&hdmi->audio_switch, tegra_edid_audio_supported(hdmi->edid) ? 1 : 0);
 #endif
 		dev_info(&dc->ndev->dev, "display detected\n");
-
 		dc->connected = true;
 		tegra_dc_ext_process_hotplug(dc->ndev->id);
 	} else {
+		//printk("tegra_edid_get_eld()\n");
 		err = tegra_edid_get_eld(hdmi->edid, &hdmi->eld);
 		if (err < 0) {
 			dev_err(&dc->ndev->dev, "error populating eld\n");
@@ -1055,8 +1063,11 @@ static irqreturn_t tegra_dc_hdmi_irq(int irq, void *ptr)
 	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc);
 	unsigned long flags;
 
+	//printk("tegra_dc_hdmi_irq()\n");
+
 	spin_lock_irqsave(&hdmi->suspend_lock, flags);
 	if (!hdmi->suspended) {
+		//printk("hdmi->suspended=false\n");
 		__cancel_delayed_work(&hdmi->work);
 		tegra_hdmi_hotplug_signal(hdmi);
 	}

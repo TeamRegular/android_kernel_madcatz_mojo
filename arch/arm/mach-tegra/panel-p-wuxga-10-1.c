@@ -266,7 +266,7 @@ static int dsi_p_wuxga_10_1_enable(struct device *dev)
 
 	if (machine_is_dalmore())
 		err = dalmore_dsi_regulator_get(dev);
-	else if (machine_is_macallan())
+	else if (machine_is_macallan() || machine_is_mojo())
 		err = macallan_dsi_regulator_get(dev);
 	if (err < 0) {
 		pr_err("dsi regulator get failed\n");
@@ -274,7 +274,7 @@ static int dsi_p_wuxga_10_1_enable(struct device *dev)
 	}
 	if (machine_is_dalmore())
 		err = dalmore_dsi_gpio_get();
-	else if (machine_is_macallan())
+	else if (machine_is_macallan() || machine_is_mojo())
 		err = macallan_dsi_gpio_get();
 	if (err < 0) {
 		pr_err("dsi gpio request failed\n");

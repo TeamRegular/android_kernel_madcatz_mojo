@@ -770,6 +770,8 @@ bool tegra_dc_hpd(struct tegra_dc *dc)
 	if (dc->out->hotplug_report)
 		dc->out->hotplug_report(hpd);
 
+	//printk("tegra_dc_hpd(): hpd=%d, level=%d, sense=%d\n", hpd, level, sense);
+
 	return hpd;
 }
 EXPORT_SYMBOL(tegra_dc_hpd);
@@ -2471,6 +2473,17 @@ static int tegra_dc_probe(struct platform_device *ndev)
 	else
 		dev_err(&ndev->dev, "No default output specified.  Leaving output disabled.\n");
 	dc->mode_dirty = false; /* ignore changes tegra_dc_set_out has done */
+
+	/* Adjust powergate_id based on dc->out for HDMI.
+	 * This can't be done above where powergate_id was first set
+	 * since dc->out isn't known yet.
+	 * This code assumes DISB depends on DISA. DC's powergate
+	 * code will have to change if dependency is removed
+	 */
+	if (dc->out && dc->out->type == TEGRA_DC_OUT_HDMI) {
+		pr_info("changing dc->powergate_id to DISB\n");
+		dc->powergate_id = TEGRA_POWERGATE_DISB;
+	}
 
 	dc->ext = tegra_dc_ext_register(ndev, dc);
 	if (IS_ERR_OR_NULL(dc->ext)) {

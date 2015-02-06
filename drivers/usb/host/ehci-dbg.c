@@ -1013,6 +1013,66 @@ static int debug_async_open(struct inode *inode, struct file *file)
 	return file->private_data ? 0 : -ENOMEM;
 }
 
+static int debug_testmodes_open(struct inode *inode, struct file *file)
+{
+	struct debug_buffer *buf;
+	buf = alloc_buffer(inode->i_private, fill_testmodes_buffer);
+
+	if (!buf)
+		return -ENOMEM;
+
+	buf->alloc_size = (sizeof(void *) == 4 ? 6 : 8)*PAGE_SIZE;
+	file->private_data = buf;
+	return 0;
+}
+
+static ssize_t debug_testmodes_write(struct file *file,
+		const char __user *buffer, size_t count, loff_t *ppos)
+{
+	struct usb_hcd		*hcd;
+	struct ehci_hcd		*ehci;
+	struct usb_device	*hub;
+	char buf[50];
+	size_t len, slen;
+	int i;
+	int status = -1;
+	u32 val;
+
+	hcd = bus_to_hcd(((struct debug_buffer *)file->private_data)->bus);
+	ehci = hcd_to_ehci(hcd);
+	hub = hcd->self.root_hub;
+
+	len = min(count, (size_t) sizeof(buf) - 1);
+	if (copy_from_user(buf, buffer, len))
+		return -EFAULT;
+	buf[len] = '\0';
+	if (len > 0 && buf[len - 1] == '\n')
+		buf[len - 1] = '\0';
+
+	for (i = 0; i < TESTMODES_SIZE; i++) {
+		slen = strlen(testmodes[i]);
+		if (!strncmp(buf, testmodes[i], slen)) {
+
+			/*clear the last testmode*/
+			val = readl(hcd->regs + USB_PORTSC1_REG);
+			val &= ~PTC_MASK;
+			writel(val, hcd->regs + USB_PORTSC1_REG);
+
+			/*issue the new testmode*/
+			val = readl(hcd->regs + USB_PORTSC1_REG);
+			val |= (i << PTC_SHIFT) & PTC_MASK;
+			writel(val, hcd->regs + USB_PORTSC1_REG);
+
+			status = 0;
+			break;
+		}
+	}
+	if (status >= 0)
+		return count;
+	else
+		return -EINVAL;
+}
+
 static int debug_periodic_open(struct inode *inode, struct file *file)
 {
 	struct debug_buffer *buf;
@@ -1202,7 +1262,9 @@ static inline void create_debug_files (struct ehci_hcd *ehci)
 	if (!debugfs_create_file("lpm", S_IRUGO|S_IWUSR, ehci->debug_dir, bus,
 						    &debug_lpm_fops))
 		goto file_error;
-
+	if (!debugfs_create_file("testmode", S_IRUGO, ehci->debug_dir, bus,
+							&debug_testmodes_fops))
+		goto file_error;
 	return;
 
 file_error:

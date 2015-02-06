@@ -30,8 +30,13 @@
 #define TEGRA_XUSB_SS_P0	(1 << 0)
 #define TEGRA_XUSB_SS_P1	(1 << 1)
 #define XUSB_SS_PORT_COUNT	(2)
-#define XUSB_UTMI_COUNT	(2)
 #define XUSB_UTMI_INDEX	(8)
+#if defined (CONFIG_ARCH_TEGRA_11x_SOC)
+#define XUSB_UTMI_COUNT	(2)
+#elif defined (CONFIG_ARCH_TEGRA_12x_SOC)
+#define XUSB_UTMI_COUNT	(3)
+#define TEGRA_XUSB_USB2_P2	(BIT(XUSB_UTMI_INDEX + 2))
+#endif
 #define TEGRA_XUSB_USB2_P0	BIT(XUSB_UTMI_INDEX)
 #define TEGRA_XUSB_USB2_P1	BIT(XUSB_UTMI_INDEX + 1)
 #define TEGRA_XUSB_HSIC_P0	(1 << 16)
@@ -49,6 +54,25 @@ struct tegra_xusb_utmi_config {
 	bool hs_curr_level_override; /* override value from usb_calib0 fuse */
 };
 
+struct tegra_xusb_regulator_name {
+	u8 *s3p3v;
+	u8 *s1p8v;
+	u8 *s1p2v;
+	u8 *s1p05v;
+};
+
+enum vbus_en_type {
+	VBUS_FIXED = 0,	/* VBUS enabled by GPIO, without PADCTL OC detection */
+	VBUS_FIXED_OC,	/* VBUS enabled by GPIO, with PADCTL detection */
+	VBUS_EN_OC,	/* VBUS enabled by XUSB PADCTL */
+};
+
+struct usb_vbus_en_oc {
+	enum vbus_en_type type;
+	void (*set_tristate)(bool on);	/* valid when type is VBUS_EN_OC */
+	const char *reg_name;		/* valid when type is VBUS_FIXED[_OC] */
+};
+
 struct tegra_xusb_board_data {
 	u32	portmap;
 	/*
@@ -57,8 +81,9 @@ struct tegra_xusb_board_data {
 	 */
 	u8	ss_portmap;
 	u8	ulpicap;
-	void (*set_vbus_en1_tristate)(bool on);
 	struct tegra_xusb_utmi_config utmi[XUSB_UTMI_COUNT];
+	struct usb_vbus_en_oc vbus_en_oc[XUSB_UTMI_COUNT];
+	struct tegra_xusb_regulator_name supply;
 };
 
 struct tegra_xusb_platform_data {
@@ -79,7 +104,7 @@ struct tegra_xusb_platform_data {
 	unsigned long quirks;
 };
 
-#define TEGRA_XUSB_NEED_HS_DISCONNECT_SW_WAR BIT(0)
+#define TEGRA_XUSB_USE_HS_SRC_CLOCK2 BIT(0)
 
 extern struct tegra_xusb_platform_data *tegra_xusb_init(
 				struct tegra_xusb_board_data *bdata);

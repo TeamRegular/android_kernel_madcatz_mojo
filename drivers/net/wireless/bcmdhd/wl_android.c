@@ -1312,15 +1312,94 @@ int wifi_set_power(int on, unsigned long msec)
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 35))
+int wifi_set_random_mac(unsigned char *buf)
+{
+	unsigned char randmac[3], p=0;
+	if (!buf)
+		return -EINVAL;
+	get_random_bytes(randmac, 3);
+	printf("gen last three rand mac %X:%X:%X\n", randmac[0],randmac[1],randmac[2]);
+	*(buf+p++) = 0x34;
+	*(buf+p++) = 0x23;
+	*(buf+p++) = 0x87;
+	*(buf+p++) = randmac[0];
+	*(buf+p++) = randmac[1];
+	*(buf+p)   = randmac[2];
+	return 0;
+}
+char *char2hex(char *chr)
+{
+	if(chr != NULL){
+		if(*chr-'0' < 10)//0~10
+			*chr = *chr-'0';
+		else if(*chr >= 0x41 && *chr <= 0x46)//ABCDEF
+			*chr = 10+*chr-'A';
+		else if(*chr >= 0x61 && *chr <= 0x66)//abcdef
+			*chr = 10+*chr-'a';
+	}
+	return chr;
+}						
+
 int wifi_get_mac_addr(unsigned char *buf)
 {
+	#define BUFF_SIZE 256
+	#define MAC_LEN 12
+	#define WIFI_FILE_PATH "/data/misc/wifi/conf/wifi_famp_addr.conf" 
+	#define WIFI_MAC_STRING "WIFI_MAC="
+	struct file *filp;
+	unsigned int mactaglen= strlen(WIFI_MAC_STRING); 
+	int ret=0, i=0;
+	unsigned char *ptr=NULL, bsht = 0;
+	unsigned char read_buff[BUFF_SIZE]={0};
+	mm_segment_t old_fs;
+
 	DHD_ERROR(("%s\n", __FUNCTION__));
 	if (!buf)
 		return -EINVAL;
-	if (wifi_control_data && wifi_control_data->get_mac_addr) {
+
+	filp = filp_open(WIFI_FILE_PATH, O_RDONLY, 0);
+	if(IS_ERR(filp)) {
+		printf("open /data/misc/wifi/conf/wifi_famp_addr.conf FAILED\n");
+		return wifi_set_random_mac(buf);
+	} 
+	else{
+		old_fs = get_fs();
+		set_fs(KERNEL_DS);
+
+		if(filp->f_op && filp->f_op->read) {
+			ret = filp->f_op->read(filp, read_buff, sizeof(read_buff), &(filp->f_pos));
+		}
+
+		if(ret >= MAC_LEN) {
+			// search the string 'WIFI_MAC=000AF58989FF'
+			if((ptr = strstr(read_buff, WIFI_MAC_STRING))) {
+				for(i=mactaglen;i<(mactaglen+MAC_LEN);i+=2) {
+					*(buf+bsht) = *char2hex(read_buff+i)<<4 | *char2hex(read_buff+i+1);
+					bsht ++;
+				}
+			}
+			else{//not containing "WIFI_MAC=", start from first point
+				for(i=0;i<MAC_LEN;i+=2) {
+					*(buf+bsht) = *char2hex(read_buff+i)<<4 | *char2hex(read_buff+i+1);
+					bsht ++;
+				}
+			}
+			ret = 0;
+		}
+		else{
+			printf("READ wifi_famp_addr.conf Failed ret=%d\n", ret);
+			ret = wifi_set_random_mac(buf);
+		}
+
+		filp_close(filp, NULL);
+		set_fs(old_fs);
+		return ret;
+	}
+
+	/*if (wifi_control_data && wifi_control_data->get_mac_addr) {
 		return wifi_control_data->get_mac_addr(buf);
 	}
-	return -EOPNOTSUPP;
+	return -EOPNOTSUPP;*/
 }
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 35)) */
 

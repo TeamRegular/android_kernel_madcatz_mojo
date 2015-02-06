@@ -46,7 +46,7 @@ static int tegra_gpio_wakes[] = {
 	-EINVAL,				/* wake5 */
 	TEGRA_GPIO_PU5,				/* wake6 */
 	TEGRA_GPIO_PU6,				/* wake7 */
-	TEGRA_GPIO_PC7,				/* wake8 */
+	-EINVAL,				/* wake8 */
 	TEGRA_GPIO_PS2,				/* wake9 */
 	-EINVAL,				/* wake10 */
 	-EINVAL,				/* wake11 */
@@ -65,7 +65,7 @@ static int tegra_gpio_wakes[] = {
 	TEGRA_GPIO_PV0,				/* wake24 */
 	-EINVAL,				/* wake25 */
 	-EINVAL,				/* wake26 */
-	TEGRA_GPIO_PS0,				/* wake27 */
+	-EINVAL,				/* wake27 */
 	-EINVAL,				/* wake28 */
 	-EINVAL,				/* wake29 */
 	-EINVAL,				/* wake30 */
@@ -228,11 +228,9 @@ void tegra_set_usb_wake_source(void)
 	struct board_info board_info;
 
 	tegra_get_board_info(&board_info);
-	/* For Dalmore */
-	if (board_info.board_id == BOARD_E1611) {
+	/* For USB3 wakeup on Robin */
 		tegra_wake_event_irq[41] = INT_USB3;
 		tegra_wake_event_irq[43] = -EINVAL;
-	}
 }
 
 void tegra_irq_to_wake(int irq, int *wak_list, int *wak_size)

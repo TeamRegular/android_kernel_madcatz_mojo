@@ -24,6 +24,7 @@
 #include <linux/module.h>
 #include <linux/seq_file.h>
 #include <linux/vmalloc.h>
+#include <linux/delay.h>
 
 #include "edid.h"
 
@@ -181,11 +182,15 @@ int tegra_edid_read_block(struct tegra_edid *edid, int block, u8 *data)
 	status = i2c_transfer(edid->client->adapter, m, msg_len);
 
 	if (status < 0)
+	{
+		//printk("(status < 0) \n");
 		return status;
-
+	}
 	if (status != msg_len)
+	{
+		//printk("(status != msg_len) \n");
 		return -EIO;
-
+	}
 	return 0;
 }
 
@@ -432,12 +437,13 @@ fail:
 
 int tegra_edid_get_monspecs(struct tegra_edid *edid, struct fb_monspecs *specs)
 {
-	int i;
+	int i = 0;
 	int j;
 	int ret;
 	int extension_blocks;
 	struct tegra_edid_pvt *new_data, *old_data;
 	u8 *data;
+
 
 	new_data = vmalloc(SZ_32K + sizeof(struct tegra_edid_pvt));
 	if (!new_data)
@@ -450,13 +456,28 @@ int tegra_edid_get_monspecs(struct tegra_edid *edid, struct fb_monspecs *specs)
 	data = new_data->dc_edid.buf;
 
 	ret = tegra_edid_read_block(edid, 0, data);
-	if (ret)
-		goto fail;
 
+    do {
+    	ret = tegra_edid_read_block(edid, 0, data);
+    	if (ret) {
+            printk("tegra_edid_read_block() failed, retry %d\n", i);
+            msleep(600);
+            i++;
+    		//goto fail;
+        } else
+            i = 3;
+    } while (i < 3);
+
+	if (ret)
+	{
+		printk("tegra_edid_read_block() failed, goto fail\n");
+		goto fail;
+	}
 	memset(specs, 0x0, sizeof(struct fb_monspecs));
 	memset(&new_data->eld, 0x0, sizeof(new_data->eld));
 	fb_edid_to_monspecs(data, specs);
 	if (specs->modedb == NULL) {
+		//printk("(specs->modedb == NULL) \n");
 		ret = -EINVAL;
 		goto fail;
 	}

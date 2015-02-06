@@ -324,6 +324,15 @@ config MACH_MACALLAN
        help
          Support for NVIDIA MACALLAN development platform
 
+config MACH_MOJO
+       bool "Mojo board"
+       depends on ARCH_TEGRA_11x_SOC
+       select MACH_HAS_SND_SOC_TEGRA_RT5639 if SND_SOC
+       select MACH_HAS_SND_SOC_TEGRA_RT5640 if SND_SOC
+       select EDP_FRAMEWORK
+       help
+         Support for NVIDIA MOJO development platform         
+
 config MACH_TEGRA_PLUTO
        bool "Pluto board"
        depends on ARCH_TEGRA_11x_SOC

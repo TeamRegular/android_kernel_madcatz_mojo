@@ -270,6 +270,7 @@ static int tegra_ehci_hub_control(
 		if (wValue == USB_PORT_FEAT_SUSPEND) {
 			tegra_usb_phy_pre_resume(tegra->phy, false);
 			tegra->port_resuming = 1;
+			set_bit(wIndex-1, &ehci->resuming_ports);
 		} else if (wValue == USB_PORT_FEAT_ENABLE) {
 			u32 temp;
 			temp = ehci_readl(ehci, &ehci->regs->port_status[0]) & ~PORT_RWC_BITS;
@@ -304,6 +305,7 @@ static int tegra_ehci_hub_control(
 			if (wValue == USB_PORT_FEAT_SUSPEND) {
 				/* tegra USB controller needs 25 ms to resume the port */
 				ehci->reset_done[wIndex-1] = jiffies + msecs_to_jiffies(25);
+				clear_bit(wIndex-1, &ehci->resuming_ports);
 			}
 			break;
 		}

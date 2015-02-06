@@ -137,6 +137,8 @@ static int palmas_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	tm->tm_mday = bcd2bin(rtc_data[3]);
 	tm->tm_mon = bcd2bin(rtc_data[4]) - 1;
 	tm->tm_year = bcd2bin(rtc_data[5]) + 100;
+	if (tm->tm_year < 113) 
+		tm->tm_year = 113;
 
 	dev_dbg(dev, "%s() %d %d %d %d %d %d\n",
 		__func__, tm->tm_year, tm->tm_mon, tm->tm_mday,

@@ -1004,6 +1004,7 @@ void hidinput_hid_event(struct hid_device *hid, struct hid_field *field, struct 
 	    (value < field->logical_minimum ||
 	     value > field->logical_maximum)) {
 		dbg_hid("Ignoring out-of-range value %x\n", value);
+		if(field->logical_minimum!=field->logical_maximum)
 		return;
 	}
 
