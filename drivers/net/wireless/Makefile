@@ -59,7 +59,9 @@ obj-$(CONFIG_IWM)	+= iwmc3200wifi/
 
 obj-$(CONFIG_MWIFIEX)	+= mwifiex/
 
+ifneq ($(CONFIG_BCMDHD),y)
 obj-$(CONFIG_BCMDHD)	+= bcmdhd/
+endif
 
 obj-$(CONFIG_BCM43241)	+= bcm43241/
 
