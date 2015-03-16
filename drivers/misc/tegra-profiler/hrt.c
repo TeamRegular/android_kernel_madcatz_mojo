@@ -60,6 +60,11 @@ static inline u32 quadd_arch_timer_get_cntkctl(void)
 	return cntkctl;
 }
 
+static inline u32 get_task_state(struct task_struct *task)
+{
+	return (u32)(task->state | task->exit_state);
+}
+
 static enum hrtimer_restart hrtimer_handler(struct hrtimer *hrtimer)
 {
 	struct pt_regs *regs;
@@ -224,8 +229,8 @@ put_sched_sample(struct task_struct *task, int is_sched_in)
 
 	s->reserved = 0;
 
-	s->data[0] = 0;
-	s->data[1] = 0;
+	s->data[QUADD_SCHED_IDX_TASK_STATE] = get_task_state(task);
+	s->data[QUADD_SCHED_IDX_RESERVED] = 0;
 
 	quadd_put_sample_this_cpu(&record, NULL, 0);
 }
@@ -347,6 +352,9 @@ read_all_sources(struct pt_regs *regs, struct task_struct *task)
 	if (!task)
 		task = current;
 
+	if (task_is_dead(task))
+		return;
+
 	rcu_read_lock();
 	if (!task_nsproxy(task)) {
 		rcu_read_unlock();
@@ -451,7 +459,7 @@ read_all_sources(struct pt_regs *regs, struct task_struct *task)
 	vec[vec_idx].len = nr_positive_events * sizeof(events_extra[0]);
 	vec_idx++;
 
-	state = task->state;
+	state = get_task_state(task);
 	if (state) {
 		s->state = 1;
 		vec[vec_idx].base = &state;
