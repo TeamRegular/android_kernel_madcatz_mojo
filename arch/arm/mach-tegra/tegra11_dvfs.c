@@ -1,7 +1,7 @@
 /*
  * arch/arm/mach-tegra/tegra11_dvfs.c
  *
- * Copyright (c) 2012-2013 NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2012-2014 NVIDIA CORPORATION. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -21,6 +21,7 @@
 #include <linux/clk.h>
 #include <linux/kobject.h>
 #include <linux/err.h>
+#include <linux/pm_qos.h>
 
 #include "clock.h"
 #include "dvfs.h"
@@ -987,6 +988,7 @@ static struct core_bus_limit_table tegra11_bus_cap_table[] = {
 	{ .limit_clk_name = "cap.profile.c2bus",
 	  .refcnt_attr = {.attr = {.name = "cbus_cap_state", .mode = 0644} },
 	  .level_attr  = {.attr = {.name = "cbus_cap_level", .mode = 0644} },
+	  .pm_qos_class = PM_QOS_GPU_FREQ_MAX,
 	},
 #else
 	{ .limit_clk_name = "cap.profile.cbus",
@@ -1009,6 +1011,7 @@ static struct core_bus_limit_table tegra11_bus_floor_table[] = {
 	{ .limit_clk_name = "floor.profile.c2bus",
 	  .refcnt_attr = {.attr = {.name = "cbus_floor_state", .mode = 0644} },
 	  .level_attr  = {.attr = {.name = "cbus_floor_level", .mode = 0644} },
+	  .pm_qos_class = PM_QOS_GPU_FREQ_MIN,
 	},
 #else
 	{ .limit_clk_name = "floor.profile.cbus",

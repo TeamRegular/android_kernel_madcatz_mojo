@@ -218,6 +218,7 @@ int get_pwr_i2c_clk_rate(void);
 int tegra_get_pmic_rst_reason(void);
 #ifdef CONFIG_ANDROID
 bool get_androidboot_mode_charger(void);
+bool get_androidkernel_type_recovery(void);
 #endif
 extern void tegra_set_usb_vbus_internal_wake(bool enable);
 extern void tegra_set_usb_id_internal_wake(bool enable);

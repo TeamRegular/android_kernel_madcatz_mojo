@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2012-2015, NVIDIA CORPORATION.  All rights reserved.
  *
  * Description:
  * High-speed USB device controller driver.
@@ -1487,6 +1487,19 @@ static int tegra_detect_cable_type(struct tegra_udc *udc)
 	return 0;
 }
 
+bool suspend_with_otg_connected;
+
+static struct kernel_param_ops suspend_with_otg_connected_param_ops = {
+	.set = param_set_bool,
+	.get = param_get_bool,
+};
+
+module_param_cb(suspend_with_otg_connected,
+				&suspend_with_otg_connected_param_ops,
+				&suspend_with_otg_connected, 0644);
+MODULE_PARM_DESC(suspend_with_otg_connected,
+				 "suspend system with otg(device) cable connected");
+
 /**
  * Notify controller that VBUS is powered, called by whatever
  * detects VBUS sessions
@@ -1516,10 +1529,12 @@ static int tegra_vbus_session(struct usb_gadget *gadget, int is_active)
 		dr_controller_reset(udc);
 		udc->vbus_active = 0;
 		udc->usb_state = USB_STATE_DEFAULT;
-		tegra_udc_set_charger_type(udc, CONNECT_TYPE_NONE);
+		if (!suspend_with_otg_connected)
+			tegra_udc_set_charger_type(udc, CONNECT_TYPE_NONE);
 		spin_unlock_irqrestore(&udc->lock, flags);
 		tegra_usb_phy_power_off(udc->phy);
-		tegra_usb_set_charging_current(udc);
+		if (!suspend_with_otg_connected)
+			tegra_usb_set_charging_current(udc);
 	} else if (!udc->vbus_active && is_active) {
 #ifdef CONFIG_TEGRA_GADGET_BOOST_CPU_FREQ
 		if (system_state != SYSTEM_BOOTING)

@@ -1,7 +1,7 @@
 /*
  * arch/arm/mach-tegra/tegra_core_sysfs_limits.h
  *
- * Copyright (c) 2013, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2013-2014 NVIDIA CORPORATION. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -29,7 +29,13 @@ struct core_bus_limit_table {
 	struct kobj_attribute refcnt_attr;
 	struct kobj_attribute level_attr;
 	int refcnt;
-	int level;
+	unsigned long level;
+	struct notifier_block qos_nb;
+	int pm_qos_class;
+	bool applied;
+	int (*update)(struct core_bus_limit_table *bus_limit,
+		      unsigned long qos_limit_level);
+
 };
 
 int tegra_init_core_cap(struct core_dvfs_cap_table *table, int table_size,

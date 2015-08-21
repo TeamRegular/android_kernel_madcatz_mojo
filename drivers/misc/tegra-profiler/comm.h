@@ -77,6 +77,8 @@ struct quadd_comm_ctx {
 	wait_queue_head_t read_wait;
 
 	struct miscdevice *misc_dev;
+
+	char *tmp_buf;
 };
 
 struct quadd_comm_data_interface *

@@ -54,12 +54,15 @@
 		.debounce_interval = 0,             \
 	}
 
+/* SW_TABLET_MODE switch is used for stylus pen detection
+ * when SW_TABLET_MODE = 1, pen is inserted
+ */
 static struct gpio_keys_button tegranote7c_p1988_keys[] = {
 	[0] = GPIO_KEY(KEY_POWER, PQ0, 1),
 	[1] = GPIO_KEY(KEY_VOLUMEUP, PR2, 1),
 	[2] = GPIO_KEY(KEY_VOLUMEDOWN, PQ2, 1),
 	[3] = GPIO_SW(SW_LID, PC7, 1, 1),
-	[4] = GPIO_SW(SW_TABLET_MODE, PO5, 0, 1),
+	[4] = GPIO_SW(SW_TABLET_MODE, PO5, 1, 1),
 };
 
 static int tegranote7c_wakeup_key(void)

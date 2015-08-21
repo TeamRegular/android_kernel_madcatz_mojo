@@ -875,7 +875,8 @@ int _tegra_dc_update_cmu(struct tegra_dc *dc, struct tegra_dc_cmu *cmu)
 {
 	u32 val;
 
-	if (dc->pdata->cmu_enable) {
+	if (dc->pdata->cmu_enable &&
+		!(dc->out->flags & TEGRA_DC_OUT_INITIALIZED_MODE)) {
 		dc->pdata->flags |= TEGRA_DC_FLAG_CMU_ENABLE;
 	} else {
 		dc->pdata->flags &= ~TEGRA_DC_FLAG_CMU_ENABLE;
@@ -2117,12 +2118,6 @@ static void _tegra_dc_disable(struct tegra_dc *dc)
 	if (dc->out->flags & TEGRA_DC_OUT_ONE_SHOT_MODE)
 		mutex_unlock(&dc->one_shot_lock);
 
-	/*
-	 * We will need to reinitialize the display the next time panel
-	 * is enabled.
-	 */
-	dc->out->flags &= ~TEGRA_DC_OUT_INITIALIZED_MODE;
-
 	tegra_log_suspend_time();
 }
 
@@ -2552,6 +2547,12 @@ static int tegra_dc_probe(struct platform_device *ndev)
 		tegra_dc_powergate_locked(dc);
 
 	tegra_dc_create_sysfs(&dc->ndev->dev);
+
+	/*
+	 * We will need to reinitialize the display the next time panel
+	 * is enabled.
+	 */
+	dc->out->flags &= ~TEGRA_DC_OUT_INITIALIZED_MODE;
 
 	return 0;
 

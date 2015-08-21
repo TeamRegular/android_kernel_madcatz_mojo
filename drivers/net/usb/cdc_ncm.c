@@ -216,7 +216,8 @@ static u8 cdc_ncm_setup(struct cdc_ncm_ctx *ctx)
 	}
 
 	/* read correct set of parameters according to device mode */
-	ctx->rx_max = le32_to_cpu(ctx->ncm_parm.dwNtbInMaxSize);
+	ctx->rx_max = (le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize) > 8192) ?
+		8192 : le32_to_cpu(ctx->ncm_parm.dwNtbInMaxSize);
 	ctx->tx_max = le32_to_cpu(ctx->ncm_parm.dwNtbOutMaxSize);
 	ctx->tx_remainder = le16_to_cpu(ctx->ncm_parm.wNdpOutPayloadRemainder);
 	ctx->tx_modulus = le16_to_cpu(ctx->ncm_parm.wNdpOutDivisor);

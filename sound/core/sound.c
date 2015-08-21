@@ -437,6 +437,10 @@ static void snd_minor_info_read(struct snd_info_entry *entry, struct snd_info_bu
 int __init snd_minor_info_init(void)
 {
 	struct snd_info_entry *entry;
+	int minor;
+
+	for (minor = 0; minor < SNDRV_OS_MINORS; minor++)
+		snd_minors[minor] = NULL;
 
 	entry = snd_info_create_module_entry(THIS_MODULE, "devices", NULL);
 	if (entry) {

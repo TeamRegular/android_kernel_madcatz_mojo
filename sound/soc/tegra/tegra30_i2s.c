@@ -1585,6 +1585,11 @@ int tegra30_make_bt_voice_call_connections(struct codec_config *codec_info,
 			(bb_i2s->dam_ifc*2), TEGRA30_AHUB_TXCIF_I2S0_TX0 +
 			codec_info->i2s_id);
 
+		tegra30_ahub_set_rx_cif_source(
+			TEGRA30_AHUB_RXCIF_DAM0_RX1 +
+			(codec_i2s->dam_ifc*2), codec_i2s->txcif);
+
+
 		/*enable dam and i2s*/
 		tegra30_dam_enable(codec_i2s->dam_ifc, TEGRA30_DAM_ENABLE,
 			TEGRA30_DAM_CHIN0_SRC);

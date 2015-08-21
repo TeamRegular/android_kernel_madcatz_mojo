@@ -1102,13 +1102,15 @@ void fb_edid_add_monspecs(unsigned char *edid, struct fb_monspecs *specs)
 		} else if (type == 3 && len >= 3) {
 			u32 ieee_reg = edid[pos] | (edid[pos + 1] << 8) |
 				(edid[pos + 2] << 16);
-			if (ieee_reg == 0x000c03)
-				specs->misc |= FB_MISC_HDMI;
 
-			/* HDMI_Video_Format @HDMI 1.4 ch8.2.3*/
-			if (edid[pos + 2] >> 5 != 0) {
-				fb_hvd_parse(edid, &hvd, pos + 3);
-				hdmi_num = hvd.hdmi_vic_len;
+			/* OUI for hdmi licensing, LLC */
+			if (ieee_reg == 0x000c03) {
+				specs->misc |= FB_MISC_HDMI;
+				/* HDMI_Video_Format @HDMI 1.4 ch8.2.3*/
+				if (edid[pos + 2] >> 5 != 0) {
+					fb_hvd_parse(edid, &hvd, pos + 3);
+					hdmi_num = hvd.hdmi_vic_len;
+				}
 			}
 		}
 
