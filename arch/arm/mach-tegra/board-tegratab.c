@@ -969,20 +969,8 @@ static void __init tegra_tegratab_dt_init(void)
 	 * 4 * height(1280) * double buffer(2)
 	 = over 8MB */
 #if defined(CONFIG_NVMAP_CONVERT_CARVEOUT_TO_IOVMM)
-	if (get_androidboot_mode_charger() ||
-		get_androidkernel_type_recovery())
-		tegratab_dc0_platform_data.of_data.fb_size =
-			SZ_8M + SZ_1M;
-	else
-		tegratab_dc0_platform_data.of_data.fb_size =
-			SZ_4M + SZ_512K;
-
-	/*
-	 * TODO: Need to find the reason
-	 * why small fb2 size matters in minui
-	 * like charger, recovery screen
-	 */
-	tegratab_dc1_platform_data.of_data.fb_size = SZ_2M;
+	tegratab_dc0_platform_data.of_data.fb_size = SZ_8M + SZ_1M;
+	tegratab_dc1_platform_data.of_data.fb_size = SZ_16M;
 #else
 	tegratab_dc0_platform_data.of_data.fb_size = SZ_8M + SZ_1M;
 	tegratab_dc1_platform_data.of_data.fb_size = SZ_4M;
@@ -1009,16 +997,7 @@ static void __init tegra_tegratab_reserve(void)
 {
 #if defined(CONFIG_NVMAP_CONVERT_CARVEOUT_TO_IOVMM)
 	/* 800*1280*4*2 =  8192000 bytes */
-	/*
-	 * TODO: Need to find the reason
-	 * why small fb2 size matters in minui
-	 * like charger, recovery screen
-	 */
-	if (get_androidboot_mode_charger() ||
-		get_androidkernel_type_recovery())
-		tegra_reserve(0, SZ_8M + SZ_1M, SZ_2M);
-	else
-		tegra_reserve(0, SZ_4M + SZ_512K, SZ_2M);
+	tegra_reserve(0, SZ_8M, SZ_16M);
 #else
 	tegra_reserve(SZ_128M, SZ_8M, SZ_4M);
 #endif

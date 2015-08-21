@@ -265,8 +265,9 @@
 			};
 			framebuffer-data {
 				nvidia,fb-bpp = <32>; /* bits per pixel */
-				nvidia,fb-xres = <720>;
-				nvidia,fb-yres = <480>;
+				nvidia,fb-flags = "flip_on_probe";
+				nvidia,fb-xres = <1024>;
+				nvidia,fb-yres = <600>;
 			};
 		};
 		dsi {
